@@ -116,7 +116,6 @@ def load_manifest(repository, version, test_mode, package_name=None):
 
     return manifest
 
-
 def add_dependencies(result, section):
     """Добавить зависимости из одного раздела."""
     for name, details in section.items():
@@ -151,3 +150,81 @@ def get_direct_dependencies(manifest, package_name):
             )
 
     return sorted(dependencies.items())
+def download_lockfile(repository, version):
+    """Загрузить Cargo.lock."""
+    owner, repo = get_repo_parts(repository)
+
+    tags = [version]
+    if not version.startswith("v"):
+        tags.append("v" + version)
+
+    for tag in tags:
+        url = (
+            f"https://raw.githubusercontent.com/"
+            f"{owner}/{repo}/{tag}/Cargo.lock"
+        )
+
+        try:
+            with urlopen(url, timeout=REQUEST_TIMEOUT) as response:
+                text = response.read().decode("utf-8")
+            return tomllib.loads(text)
+        except HTTPError as error:
+            if error.code != HTTP_NOT_FOUND:
+                raise ValueError("Ошибка загрузки Cargo.lock") from error
+        except (URLError, TimeoutError) as error:
+            raise ValueError("Не удалось подключиться к GitHub") from error
+
+    raise ValueError("Cargo.lock не найден")
+
+
+def load_lock_graph(repository, version, package_name):
+    """Получить граф зависимостей."""
+    lockfile = download_lockfile(repository, version)
+    packages = lockfile.get("package", [])
+    graph = {}
+    versions = {}
+
+    for package in packages:
+        name = package.get("name")
+        package_version = package.get("version")
+
+        if not name or not package_version:
+            continue
+
+        key = f"{name}@{package_version}"
+        graph[key] = []
+        versions.setdefault(name, []).append(key)
+
+    start = f"{package_name}@{version}"
+
+    if start not in graph:
+        raise ValueError("Пакет не найден в Cargo.lock")
+
+    for package in packages:
+        name = package.get("name")
+        package_version = package.get("version")
+
+        if not name or not package_version:
+            continue
+
+        key = f"{name}@{package_version}"
+
+        for dependency in package.get("dependencies", []):
+            parts = dependency.split()
+            dependency_name = parts[0]
+
+            if len(parts) > 1:
+                dependency_key = (
+                    f"{dependency_name}@{parts[1]}"
+                )
+                if dependency_key in graph:
+                    graph[key].append(dependency_key)
+                    continue
+
+            candidates = versions.get(dependency_name, [])
+
+            if len(candidates) == 1:
+                graph[key].append(candidates[0])
+
+    return graph, start
+
