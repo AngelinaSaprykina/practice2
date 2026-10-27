@@ -1,37 +1,51 @@
-import argparse
 import unittest
 
-from src.main import is_url
-from src.main import validate_args
+from src.cargo_reader import load_manifest
+from src.cargo_reader import get_direct_dependencies
 
 
-class TestConfig(unittest.TestCase):
-    """Тесты параметров программы."""
+class TestCargo(unittest.TestCase):
+    """Проверить получение зависимостей."""
 
-    def test_correct_url(self):
-        """Проверить правильный URL."""
-        result = is_url("https://example.com/repository")
-        self.assertTrue(result)
-
-    def test_wrong_url(self):
-        """Проверить неправильный URL."""
-        result = is_url("repository")
-        self.assertFalse(result)
-
-    def test_correct_config(self):
-        """Проверить правильные параметры."""
-        parser = argparse.ArgumentParser()
-        args = argparse.Namespace(
-            package="serde",
-            repository="https://example.com/repository",
-            test=False,
-            version="1.0",
-            output="graph.svg",
-            ascii_tree=False,
-            filter=""
+    def test_load_manifest(self):
+        """Проверить чтение Cargo.toml."""
+        manifest = load_manifest(
+            "tests/test_cargo.toml",
+            "1.0.0",
+            True
         )
 
-        validate_args(args, parser)
+        self.assertEqual(manifest["package"]["name"], "A")
+
+    def test_direct_dependencies(self):
+        """Проверить список зависимостей."""
+        manifest = load_manifest(
+            "tests/test_cargo.toml",
+            "1.0.0",
+            True
+        )
+
+        dependencies = get_direct_dependencies(manifest, "A")
+
+        self.assertEqual(
+            dependencies,
+            [
+                ("pretty_assertions", "1.4"),
+                ("serde", "1.0"),
+                ("serde_json", "1.0")
+            ]
+        )
+
+    def test_wrong_package(self):
+        """Проверить ошибку при неправильном имени."""
+        manifest = load_manifest(
+            "tests/test_cargo.toml",
+            "1.0.0",
+            True
+        )
+
+        with self.assertRaises(ValueError):
+            get_direct_dependencies(manifest, "B")
 
 
 if __name__ == "__main__":
