@@ -4,10 +4,14 @@ try:
     from src.dependency_graph import load_test_graph
     from src.dependency_graph import get_reachable_packages
     from src.dependency_graph import print_packages
+    from src.visualization import build_dot_graph
+    from src.visualization import save_svg
 except ModuleNotFoundError:
     from dependency_graph import load_test_graph
     from dependency_graph import get_reachable_packages
     from dependency_graph import print_packages
+    from visualization import build_dot_graph
+    from visualization import save_svg
 
 DEFAULT_MAX_DEPTH = 3
 
@@ -71,6 +75,10 @@ def main():
             args.filter
         )
 
+        dot_text = build_dot_graph(graph, visited)
+        print(dot_text)
+        save_svg(dot_text, args.output)
+
     except (ValueError, ImportError) as error:
         parser.error(str(error))
 
@@ -80,7 +88,6 @@ def main():
         start,
         args.ascii_tree
     )
-
 
 if __name__ == "__main__":
     main()

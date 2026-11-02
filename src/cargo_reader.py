@@ -1,4 +1,3 @@
-
 import tomllib
 from pathlib import Path
 from urllib.error import HTTPError, URLError

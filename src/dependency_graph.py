@@ -32,14 +32,13 @@ def load_test_graph(filename):
 
     return graph
 
-
 def is_valid_name(name):
     """Проверить имя тестового пакета."""
     return name.isascii() and name.isalpha() and name.isupper()
 
 
 def bfs_recursive(graph, queue, visited, parents, max_depth, filter_text):
-    """Рекурсивно обойти граф в ширину."""
+    """Рекурсия в ширину."""
     if not queue:
         return visited, parents
 
@@ -78,7 +77,6 @@ def get_reachable_packages(graph, start, max_depth, filter_text=""):
     return bfs_recursive(
         graph, [(start, 0)], visited, parents, max_depth, filter_text
     )
-
 
 def print_branch(package, children, prefix, last):
     """Вывести ветку ASCII-дерева."""

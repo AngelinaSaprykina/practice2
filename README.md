@@ -74,3 +74,48 @@ python -m unittest discover -s tests -v
 python -m src.main --package A --repository tests/test_repo.txt --test --version 1.0.0 --output graph.svg --max-depth 3 --ascii-tree
 
 Для проверки ограничения глубины можно указать --max-depth 1. Для проверки фильтрации используется параметр --filter, после которого указывается нужная подстрока.
+
+# Этап 5. Визуализация графа зависимостей
+
+На пятом этапе добавлена визуализация графа зависимостей с помощью Graphviz.
+
+В файле visualization.py реализованы две функции:
+
+build_dot_graph() формирует описание графа в формате DOT и сохраняет все связи между найденными пакетами.
+
+save_svg() запускает Graphviz и сохраняет результат в формате SVG.
+
+В main.py добавлен вызов визуализации и вывод DOT-описания в консоль. Также сохранён вывод зависимостей в виде ASCII-дерева.
+
+Проверка на реальных пакетах
+
+# Для проверки использовались три Rust-пакета.
+
+1. ripgrep, версия 14.1.0
+
+python -m src.main --package ripgrep --repository https://github.com/BurntSushi/ripgrep --version 14.1.0 --output ripgrep.svg --max-depth 3 --ascii-tree
+start ripgrep.svg
+
+2. bat, версия 0.24.0
+
+python -m src.main --package bat --repository https://github.com/sharkdp/bat --version 0.24.0 --output bat.svg --max-depth 3 --ascii-tree
+start bat.svg
+
+3. fd-find, версия 10.2.0
+
+python -m src.main --package fd-find --repository https://github.com/sharkdp/fd --version 10.2.0 --output fd.svg --max-depth 3 --ascii-tree
+start fd.svg
+
+# Тестирование
+
+Для запуска всех тестов:
+
+python -m unittest discover -s tests -v
+
+Сравнение с Cargo
+
+Для сравнения результатов используется штатная команда Cargo:
+
+cargo tree --depth 3
+
+Сравниваются состав зависимостей, версии пакетов и связи между ними.
