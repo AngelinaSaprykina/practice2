@@ -108,6 +108,10 @@ start fd.svg
 
 # Тестирование
 
+python -m src.main --package A --repository tests/test_repo.txt --test --version 1.0.0 --output graph.svg --max-depth 3 --ascii-tree
+
+для вывода изображения: explorer.exe graph.svg
+
 Для запуска всех тестов:
 
 python -m unittest discover -s tests -v
